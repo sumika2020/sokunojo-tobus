@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+:root {
+  --app-bg: #efe6d7;
+  --app-ink: #1f2933;
+  --card-bg: rgba(255, 255, 255, 0.7);
+  --card-border: rgba(148, 163, 184, 0.35);
+  --accent: #f97316;
+  --font-body: "Avenir Next", "Avenir", "Trebuchet MS", "Segoe UI", "Yu Gothic", "Meiryo", sans-serif;
+  --font-display: "Rockwell", "Iowan Old Style", "Georgia", "Times New Roman", serif;
+}
+
+.app-shell {
+  min-height: 100%;
+  color: var(--app-ink);
+  background-color: var(--app-bg);
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(249, 115, 22, 0.22), transparent 45%),
+    radial-gradient(circle at 85% 15%, rgba(14, 165, 233, 0.2), transparent 42%),
+    linear-gradient(135deg, rgba(246, 231, 214, 0.95), rgba(230, 243, 250, 0.95));
+  font-family: var(--font-body, ui-sans-serif, system-ui, -apple-system, sans-serif);
+}
+
+.font-display {
+  font-family: var(--font-display, ui-sans-serif, system-ui, -apple-system, sans-serif);
+  letter-spacing: -0.02em;
+}
+
+.card-surface {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
+  backdrop-filter: blur(6px);
+}
+
+.route-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  border-width: 2px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.bus-stripe {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(255, 255, 255, 0.8) 10px,
+    rgba(255, 255, 255, 0.8) 20px
+  );
+  border: 2px solid currentColor;
+}
+
+.last-bus {
+  border-color: #ff2d2d !important;
+  text-shadow: 0 0 8px #f00;
+}
+
+.route-badge--last {
+  border-color: #ff2d2d !important;
+  text-shadow: 0 0 6px rgba(255, 45, 45, 0.85), 0 0 12px rgba(255, 45, 45, 0.6);
+  animation: last-bus-pulse 1s ease-in-out infinite;
+  box-shadow: 0 0 6px rgba(255, 45, 45, 0.6);
+}
+
+@keyframes last-bus-pulse {
+  0% {
+    box-shadow: 0 0 0 rgba(255, 45, 45, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(255, 45, 45, 0.9);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(255, 45, 45, 0.2);
+  }
+}
