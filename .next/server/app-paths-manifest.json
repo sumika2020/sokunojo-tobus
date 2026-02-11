@@ -1,4 +1,3 @@
 {
-  "/api/bus/stops/route": "app/api/bus/stops/route.js",
   "/page": "app/page.js"
 }

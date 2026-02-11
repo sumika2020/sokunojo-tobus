@@ -183,10 +183,12 @@ export default function Page() {
       setResults([]);
       if (err instanceof Error) {
         setError(err.message);
+      } else if (err instanceof Event) {
+        setError('通信エラーが発生しました。');
       } else if (err && typeof err === 'object' && 'type' in (err as Record<string, unknown>)) {
         setError('通信エラーが発生しました。');
       } else {
-        setError(String(err));
+        setError('不明なエラーが発生しました。');
       }
     } finally {
       setLoading(false);

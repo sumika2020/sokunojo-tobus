@@ -7,12 +7,12 @@ html {
 }
 
 :root {
-  --app-bg: #0a0a0a;
+  --app-bg: #05070b;
   --app-ink: #e6f0ff;
   --card-bg: rgba(10, 16, 28, 0.66);
   --card-border: rgba(34, 211, 238, 0.24);
   --accent: #22d3ee;
-  --accent-green: #22c55e;
+  --accent-green: #00ff41;
   --accent-warm: #f59e0b;
   --font-body: "Zen Kaku Gothic New", "Yu Gothic", "Meiryo", "Segoe UI", sans-serif;
   --font-display: "Orbitron", "Segoe UI", sans-serif;
@@ -24,9 +24,9 @@ html {
   background-color: var(--app-bg);
   background-image:
     radial-gradient(circle at 15% 12%, rgba(34, 211, 238, 0.2), transparent 48%),
-    radial-gradient(circle at 78% 18%, rgba(34, 197, 94, 0.18), transparent 46%),
+    radial-gradient(circle at 78% 18%, rgba(0, 255, 65, 0.18), transparent 46%),
     radial-gradient(circle at 20% 82%, rgba(59, 130, 246, 0.14), transparent 55%),
-    linear-gradient(135deg, rgba(10, 12, 20, 0.98), rgba(9, 16, 28, 0.96) 45%, rgba(5, 8, 16, 0.98)),
+    linear-gradient(135deg, rgba(5, 8, 16, 0.98), rgba(8, 12, 22, 0.96) 45%, rgba(4, 6, 12, 0.98)),
     repeating-linear-gradient(0deg, rgba(148, 163, 184, 0.08) 0 1px, transparent 1px 22px),
     repeating-linear-gradient(90deg, rgba(56, 189, 248, 0.08) 0 1px, transparent 1px 26px);
   font-family: var(--font-body, ui-sans-serif, system-ui, -apple-system, sans-serif);
@@ -46,7 +46,7 @@ html {
   background-image:
     linear-gradient(120deg, rgba(15, 23, 42, 0.72), rgba(2, 6, 23, 0.75)),
     repeating-linear-gradient(45deg, rgba(34, 211, 238, 0.08) 0 1px, transparent 1px 20px),
-    repeating-linear-gradient(-45deg, rgba(34, 197, 94, 0.06) 0 1px, transparent 1px 28px);
+    repeating-linear-gradient(-45deg, rgba(0, 255, 65, 0.08) 0 1px, transparent 1px 28px);
   mix-blend-mode: screen;
   opacity: 0.5;
 }
@@ -54,7 +54,7 @@ html {
 .app-shell::after {
   background-image:
     radial-gradient(circle at 50% 20%, rgba(34, 211, 238, 0.14), transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(34, 197, 94, 0.12), transparent 45%);
+    radial-gradient(circle at 80% 70%, rgba(0, 255, 65, 0.16), transparent 45%);
   opacity: 0.45;
 }
 
@@ -64,11 +64,11 @@ html {
 }
 
 .neon-title {
-  color: #eafff5;
+  color: #dfffe9;
   text-shadow:
-    0 0 10px rgba(34, 197, 94, 0.45),
-    0 0 20px rgba(34, 197, 94, 0.35),
-    0 0 40px rgba(34, 211, 238, 0.22);
+    0 0 10px rgba(0, 255, 65, 0.55),
+    0 0 22px rgba(0, 255, 65, 0.4),
+    0 0 44px rgba(34, 211, 238, 0.22);
 }
 
 .card-surface {

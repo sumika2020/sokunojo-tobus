@@ -17,6 +17,9 @@ const displayFont = Orbitron({
 export const metadata: Metadata = {
   title: '即乗都バス',
   description: '豊洲駅から枝川・塩浜方面へ向かうバスの到着情報と混雑状況をリアルタイムで表示します。',
+  icons: {
+    icon: '/icon.png',
+  },
 }
 
 export const viewport: Viewport = {
