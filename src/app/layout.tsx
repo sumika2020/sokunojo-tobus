@@ -15,7 +15,7 @@ const displayFont = Kanit({
 })
 
 export const metadata: Metadata = {
-  title: '豊洲駅発 - 都バス混雑比較',
+  title: '即乗都バス',
   description: '豊洲駅から枝川・塩浜方面へ向かうバスの到着情報と混雑状況をリアルタイムで表示します。',
   viewport: 'width=device-width, initial-scale=1',
 }

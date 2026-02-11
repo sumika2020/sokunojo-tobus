@@ -78,15 +78,15 @@ export default function Page() {
   const [primaryField, setPrimaryField] = useState<'origin' | 'dest' | null>(null);
   const [originSuggestions, setOriginSuggestions] = useState<string[]>([]);
   const [destSuggestions, setDestSuggestions] = useState<string[]>([]);
-  const [originFocused, setOriginFocused] = useState(false);
-  const [destFocused, setDestFocused] = useState(false);
+  const [originOpen, setOriginOpen] = useState(false);
+  const [destOpen, setDestOpen] = useState(false);
   const [results, setResults] = useState<BusArrival[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const originWrapRef = useRef<HTMLLabelElement | null>(null);
   const destWrapRef = useRef<HTMLLabelElement | null>(null);
-  const showOriginSuggestions = originSuggestions.length > 0 && originFocused;
-  const showDestSuggestions = destSuggestions.length > 0 && destFocused;
+  const showOriginSuggestions = originOpen && origin.trim().length > 0;
+  const showDestSuggestions = destOpen && dest.trim().length > 0;
 
   useEffect(() => {
     const handlePointerDown = (event: MouseEvent | TouchEvent) => {
@@ -94,8 +94,8 @@ export default function Page() {
       if (!target) return;
       const inOrigin = originWrapRef.current?.contains(target);
       const inDest = destWrapRef.current?.contains(target);
-      if (!inOrigin) setOriginFocused(false);
-      if (!inDest) setDestFocused(false);
+      if (!inOrigin) setOriginOpen(false);
+      if (!inDest) setDestOpen(false);
     };
 
     document.addEventListener('mousedown', handlePointerDown);
@@ -117,6 +117,7 @@ export default function Page() {
   useEffect(() => {
     if (!origin.trim()) {
       setOriginSuggestions([]);
+      setOriginOpen(false);
       return;
     }
     const controller = new AbortController();
@@ -141,6 +142,7 @@ export default function Page() {
   useEffect(() => {
     if (!dest.trim()) {
       setDestSuggestions([]);
+      setDestOpen(false);
       return;
     }
     const controller = new AbortController();
@@ -177,8 +179,15 @@ export default function Page() {
       const data = (await res.json()) as ApiResponse;
       setResults(Array.isArray(data.results) ? data.results : []);
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       setResults([]);
-      setError(err instanceof Error ? err.message : String(err));
+      if (err instanceof Error) {
+        setError(err.message);
+      } else if (err && typeof err === 'object' && 'type' in (err as Record<string, unknown>)) {
+        setError('通信エラーが発生しました。');
+      } else {
+        setError(String(err));
+      }
     } finally {
       setLoading(false);
     }
@@ -191,19 +200,24 @@ export default function Page() {
   };
 
   return (
-    <main className="min-h-screen px-4 pb-12 pt-6">
+    <main className="min-h-screen px-4 pb-12 pt-8 relative z-10">
       <div className="max-w-3xl mx-auto">
-        <header className="mb-4">
+        <header className="mb-6">
           <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/40 bg-slate-950/60 px-3 py-1 text-[11px] font-semibold text-cyan-200">
             個人開発・非公式アプリ
           </span>
-          <h1 className="mt-2 text-3xl font-display font-semibold text-slate-50">即乗都バス</h1>
+          <h1 className="mt-3 text-3xl sm:text-4xl font-display font-semibold neon-title">
+            即乗都バス
+          </h1>
           <p className="text-xs text-slate-300 mt-1">由来：「今すぐ」＋「乗れる」＋「都バス」</p>
           <p className="text-sm text-slate-200">
             「どの系統が一番早いか？」という迷いを排除し、乗車から降車まで最短時間でつなぐ、都バス利用者のための特化型検索アプリ。
           </p>
-          <div className="card-surface mt-2 rounded-md px-4 py-3 text-[11px] text-slate-200">
-            <p className="text-slate-100 font-semibold">
+          <details className="card-surface mt-4 rounded-2xl px-4 py-3 text-[11px] text-slate-200">
+            <summary className="cursor-pointer text-slate-100 font-semibold">
+              混雑率の目安（タップで開く）
+            </summary>
+            <p className="mt-2 text-slate-200">
               混雑率は直近の車両データを便の時刻に近いものへ紐付けた目安です。
             </p>
             <div className="mt-3 rounded-md border border-cyan-400/20 bg-slate-950/60">
@@ -250,10 +264,10 @@ export default function Page() {
               </div>
             </div>
             <p className="mt-2 text-[10px] text-slate-400">（アプリ内の目安）</p>
-          </div>
+          </details>
         </header>
 
-        <form onSubmit={onSearch} className="card-surface rounded-2xl p-4 mb-4 space-y-3">
+        <form onSubmit={onSearch} className="card-surface rounded-3xl p-5 mb-5 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label className="text-sm text-slate-200 relative block" ref={originWrapRef}>
               乗車バス停
@@ -262,38 +276,35 @@ export default function Page() {
                 onChange={(e) => {
                   const value = e.target.value;
                   setOrigin(value);
-                  setOriginFocused(true);
+                  setOriginOpen(true);
                   if (!primaryField && value.trim()) setPrimaryField('origin');
                   if (!value.trim() && !dest.trim()) setPrimaryField(null);
                 }}
-                onFocus={() => setOriginFocused(true)}
-                onClick={() => setOriginFocused(true)}
-                onBlur={() => {
-                  setTimeout(() => {
-                    if (!originWrapRef.current?.contains(document.activeElement)) {
-                      setOriginFocused(false);
-                    }
-                  }, 0);
-                }}
-                className="mt-1 w-full rounded-md border border-slate-700/70 bg-slate-950/60 px-3 py-2 text-sm text-slate-100"
+                onFocus={() => setOriginOpen(true)}
+                onClick={() => setOriginOpen(true)}
+                className="mt-2 w-full rounded-xl border border-cyan-400/20 bg-white/5 px-3 py-2 text-sm text-slate-100 shadow-inner shadow-cyan-500/10 focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300/30"
               />
               {showOriginSuggestions ? (
-                <div className="absolute left-0 right-0 top-full mt-2 rounded-md border border-cyan-400/40 bg-slate-900/95 shadow-lg shadow-cyan-500/20 max-h-56 overflow-auto z-40">
-                  {originSuggestions.map((item) => (
-                    <button
-                      type="button"
-                      key={item}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        setOrigin(item);
-                        if (!primaryField) setPrimaryField('origin');
-                        setOriginFocused(false);
-                      }}
-                      className="block w-full text-left px-3 py-2 text-sm text-slate-100 hover:bg-slate-800/60"
-                    >
-                      {item}
-                    </button>
-                  ))}
+                <div className="absolute left-0 right-0 top-full mt-2 rounded-xl border border-cyan-400/40 bg-slate-950/95 shadow-lg shadow-cyan-500/20 max-h-56 overflow-auto z-40">
+                  {originSuggestions.length === 0 ? (
+                    <div className="px-3 py-2 text-xs text-slate-400">候補なし</div>
+                  ) : (
+                    originSuggestions.map((item) => (
+                      <button
+                        type="button"
+                        key={item}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setOrigin(item);
+                          if (!primaryField) setPrimaryField('origin');
+                          setOriginOpen(false);
+                        }}
+                        className="block w-full text-left px-3 py-2 text-sm text-slate-100 hover:bg-cyan-400/10"
+                      >
+                        {item}
+                      </button>
+                    ))
+                  )}
                 </div>
               ) : null}
             </label>
@@ -304,38 +315,35 @@ export default function Page() {
                 onChange={(e) => {
                   const value = e.target.value;
                   setDest(value);
-                  setDestFocused(true);
+                  setDestOpen(true);
                   if (!primaryField && value.trim()) setPrimaryField('dest');
                   if (!value.trim() && !origin.trim()) setPrimaryField(null);
                 }}
-                onFocus={() => setDestFocused(true)}
-                onClick={() => setDestFocused(true)}
-                onBlur={() => {
-                  setTimeout(() => {
-                    if (!destWrapRef.current?.contains(document.activeElement)) {
-                      setDestFocused(false);
-                    }
-                  }, 0);
-                }}
-                className="mt-1 w-full rounded-md border border-slate-700/70 bg-slate-950/60 px-3 py-2 text-sm text-slate-100"
+                onFocus={() => setDestOpen(true)}
+                onClick={() => setDestOpen(true)}
+                className="mt-2 w-full rounded-xl border border-cyan-400/20 bg-white/5 px-3 py-2 text-sm text-slate-100 shadow-inner shadow-cyan-500/10 focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300/30"
               />
               {showDestSuggestions ? (
-                <div className="absolute left-0 right-0 top-full mt-2 rounded-md border border-cyan-400/40 bg-slate-900/95 shadow-lg shadow-cyan-500/20 max-h-56 overflow-auto z-40">
-                  {destSuggestions.map((item) => (
-                    <button
-                      type="button"
-                      key={item}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        setDest(item);
-                        if (!primaryField) setPrimaryField('dest');
-                        setDestFocused(false);
-                      }}
-                      className="block w-full text-left px-3 py-2 text-sm text-slate-100 hover:bg-slate-800/60"
-                    >
-                      {item}
-                    </button>
-                  ))}
+                <div className="absolute left-0 right-0 top-full mt-2 rounded-xl border border-cyan-400/40 bg-slate-950/95 shadow-lg shadow-cyan-500/20 max-h-56 overflow-auto z-40">
+                  {destSuggestions.length === 0 ? (
+                    <div className="px-3 py-2 text-xs text-slate-400">候補なし</div>
+                  ) : (
+                    destSuggestions.map((item) => (
+                      <button
+                        type="button"
+                        key={item}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setDest(item);
+                          if (!primaryField) setPrimaryField('dest');
+                          setDestOpen(false);
+                        }}
+                        className="block w-full text-left px-3 py-2 text-sm text-slate-100 hover:bg-cyan-400/10"
+                      >
+                        {item}
+                      </button>
+                    ))
+                  )}
                 </div>
               ) : null}
             </label>
@@ -344,7 +352,7 @@ export default function Page() {
             <button
               type="button"
               onClick={swapStops}
-              className="text-xs text-gray-500"
+              className="text-xs text-cyan-200/80 hover:text-cyan-100"
             >
               入れ替え
             </button>
@@ -352,7 +360,7 @@ export default function Page() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-cyan-400 text-slate-900 py-2 text-sm font-semibold hover:bg-cyan-300 disabled:opacity-50"
+            className="w-full rounded-xl bg-gradient-to-r from-cyan-300 via-teal-200 to-emerald-300 text-slate-900 py-2.5 text-sm font-semibold shadow-lg shadow-cyan-500/20 hover:brightness-110 disabled:opacity-50"
           >
             {loading ? '検索中...' : '検索'}
           </button>
@@ -385,7 +393,7 @@ export default function Page() {
                           }
                         : undefined
                     }
-                    className={`card-surface group p-4 rounded-lg border-l-4 transition-all hover:shadow-lg hover:-translate-y-0.5 hover:scale-[1.01] ${
+                    className={`card-surface group p-4 rounded-2xl border-l-4 transition-all hover:shadow-lg hover:-translate-y-0.5 hover:scale-[1.01] ${
                       item.isLast ? 'border-rose-400' : 'border-cyan-400/30'
                     }`}
                   >

@@ -7,14 +7,15 @@ html {
 }
 
 :root {
-  --app-bg: #070b14;
-  --app-ink: #e8f0ff;
-  --card-bg: rgba(9, 16, 28, 0.68);
-  --card-border: rgba(56, 189, 248, 0.24);
+  --app-bg: #0a0a0a;
+  --app-ink: #e6f0ff;
+  --card-bg: rgba(10, 16, 28, 0.66);
+  --card-border: rgba(34, 211, 238, 0.24);
   --accent: #22d3ee;
+  --accent-green: #22c55e;
   --accent-warm: #f59e0b;
-  --font-body: "Avenir Next", "Avenir", "Trebuchet MS", "Segoe UI", "Yu Gothic", "Meiryo", sans-serif;
-  --font-display: "Rockwell", "Iowan Old Style", "Georgia", "Times New Roman", serif;
+  --font-body: "Zen Kaku Gothic New", "Yu Gothic", "Meiryo", "Segoe UI", sans-serif;
+  --font-display: "Orbitron", "Segoe UI", sans-serif;
 }
 
 .app-shell {
@@ -22,14 +23,39 @@ html {
   color: var(--app-ink);
   background-color: var(--app-bg);
   background-image:
-    radial-gradient(circle at 12% 18%, rgba(34, 211, 238, 0.24), transparent 48%),
-    radial-gradient(circle at 80% 22%, rgba(245, 158, 11, 0.18), transparent 50%),
-    radial-gradient(circle at 20% 78%, rgba(59, 130, 246, 0.16), transparent 55%),
-    linear-gradient(135deg, rgba(7, 11, 20, 0.98), rgba(10, 16, 28, 0.96) 45%, rgba(5, 8, 18, 0.98)),
+    radial-gradient(circle at 15% 12%, rgba(34, 211, 238, 0.2), transparent 48%),
+    radial-gradient(circle at 78% 18%, rgba(34, 197, 94, 0.18), transparent 46%),
+    radial-gradient(circle at 20% 82%, rgba(59, 130, 246, 0.14), transparent 55%),
+    linear-gradient(135deg, rgba(10, 12, 20, 0.98), rgba(9, 16, 28, 0.96) 45%, rgba(5, 8, 16, 0.98)),
     repeating-linear-gradient(0deg, rgba(148, 163, 184, 0.08) 0 1px, transparent 1px 22px),
     repeating-linear-gradient(90deg, rgba(56, 189, 248, 0.08) 0 1px, transparent 1px 26px);
   font-family: var(--font-body, ui-sans-serif, system-ui, -apple-system, sans-serif);
   background-attachment: fixed;
+}
+
+.app-shell::before,
+.app-shell::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app-shell::before {
+  background-image:
+    linear-gradient(120deg, rgba(15, 23, 42, 0.72), rgba(2, 6, 23, 0.75)),
+    repeating-linear-gradient(45deg, rgba(34, 211, 238, 0.08) 0 1px, transparent 1px 20px),
+    repeating-linear-gradient(-45deg, rgba(34, 197, 94, 0.06) 0 1px, transparent 1px 28px);
+  mix-blend-mode: screen;
+  opacity: 0.5;
+}
+
+.app-shell::after {
+  background-image:
+    radial-gradient(circle at 50% 20%, rgba(34, 211, 238, 0.14), transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(34, 197, 94, 0.12), transparent 45%);
+  opacity: 0.45;
 }
 
 .font-display {
@@ -37,9 +63,17 @@ html {
   letter-spacing: -0.02em;
 }
 
+.neon-title {
+  color: #eafff5;
+  text-shadow:
+    0 0 10px rgba(34, 197, 94, 0.45),
+    0 0 20px rgba(34, 197, 94, 0.35),
+    0 0 40px rgba(34, 211, 238, 0.22);
+}
+
 .card-surface {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
-  box-shadow: 0 20px 40px rgba(3, 7, 18, 0.6);
-  backdrop-filter: blur(14px) saturate(150%);
+  box-shadow: 0 24px 50px rgba(3, 7, 18, 0.6);
+  backdrop-filter: blur(18px) saturate(160%);
 }

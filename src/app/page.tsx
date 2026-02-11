@@ -78,15 +78,15 @@ export default function Page() {
   const [primaryField, setPrimaryField] = useState<'origin' | 'dest' | null>(null);
   const [originSuggestions, setOriginSuggestions] = useState<string[]>([]);
   const [destSuggestions, setDestSuggestions] = useState<string[]>([]);
-  const [originFocused, setOriginFocused] = useState(false);
-  const [destFocused, setDestFocused] = useState(false);
+  const [originOpen, setOriginOpen] = useState(false);
+  const [destOpen, setDestOpen] = useState(false);
   const [results, setResults] = useState<BusArrival[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const originWrapRef = useRef<HTMLDivElement | null>(null);
   const destWrapRef = useRef<HTMLDivElement | null>(null);
-  const showOriginSuggestions = originSuggestions.length > 0 && originFocused;
-  const showDestSuggestions = destSuggestions.length > 0 && destFocused;
+  const showOriginSuggestions = originOpen && origin.trim().length > 0;
+  const showDestSuggestions = destOpen && dest.trim().length > 0;
 
   useEffect(() => {
     const handlePointerDown = (event: MouseEvent | TouchEvent) => {
@@ -94,8 +94,8 @@ export default function Page() {
       if (!target) return;
       const inOrigin = originWrapRef.current?.contains(target);
       const inDest = destWrapRef.current?.contains(target);
-      if (!inOrigin) setOriginFocused(false);
-      if (!inDest) setDestFocused(false);
+      if (!inOrigin) setOriginOpen(false);
+      if (!inDest) setDestOpen(false);
     };
 
     document.addEventListener('mousedown', handlePointerDown);
@@ -117,6 +117,7 @@ export default function Page() {
   useEffect(() => {
     if (!origin.trim()) {
       setOriginSuggestions([]);
+      setOriginOpen(false);
       return;
     }
     const controller = new AbortController();
@@ -141,6 +142,7 @@ export default function Page() {
   useEffect(() => {
     if (!dest.trim()) {
       setDestSuggestions([]);
+      setDestOpen(false);
       return;
     }
     const controller = new AbortController();
@@ -177,8 +179,15 @@ export default function Page() {
       const data = (await res.json()) as ApiResponse;
       setResults(Array.isArray(data.results) ? data.results : []);
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       setResults([]);
-      setError(err instanceof Error ? err.message : String(err));
+      if (err instanceof Error) {
+        setError(err.message);
+      } else if (err && typeof err === 'object' && 'type' in (err as Record<string, unknown>)) {
+        setError('通信エラーが発生しました。');
+      } else {
+        setError(String(err));
+      }
     } finally {
       setLoading(false);
     }
@@ -267,38 +276,35 @@ export default function Page() {
                 onChange={(e) => {
                   const value = e.target.value;
                   setOrigin(value);
-                  setOriginFocused(true);
+                  setOriginOpen(true);
                   if (!primaryField && value.trim()) setPrimaryField('origin');
                   if (!value.trim() && !dest.trim()) setPrimaryField(null);
                 }}
-                onFocus={() => setOriginFocused(true)}
-                onClick={() => setOriginFocused(true)}
-                onBlur={() => {
-                  setTimeout(() => {
-                    if (!originWrapRef.current?.contains(document.activeElement)) {
-                      setOriginFocused(false);
-                    }
-                  }, 0);
-                }}
+                onFocus={() => setOriginOpen(true)}
+                onClick={() => setOriginOpen(true)}
                 className="w-full rounded-lg border border-slate-700/70 bg-slate-950/60 px-4 py-3 text-base text-slate-100 placeholder:text-slate-500 focus:ring-2 focus:ring-cyan-400 focus:border-transparent outline-none transition-all"
               />
               {showOriginSuggestions ? (
-                <div className="absolute left-0 right-0 top-full mt-2 rounded-lg border border-cyan-400/40 bg-slate-900/95 shadow-lg shadow-cyan-500/20 max-h-56 overflow-auto z-40">
-                  {originSuggestions.map((item) => (
-                    <button
-                      type="button"
-                      key={item}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        setOrigin(item);
-                        if (!primaryField) setPrimaryField('origin');
-                        setOriginFocused(false);
-                      }}
-                      className="block w-full text-left px-3 py-2 text-sm text-slate-100 hover:bg-slate-800/60"
-                    >
-                      {item}
-                    </button>
-                  ))}
+                <div className="absolute left-0 right-0 top-full mt-2 rounded-md border border-cyan-400/40 bg-slate-900/95 shadow-lg shadow-cyan-500/20 max-h-56 overflow-auto z-40">
+                  {originSuggestions.length === 0 ? (
+                    <div className="px-3 py-2 text-xs text-slate-400">候補なし</div>
+                  ) : (
+                    originSuggestions.map((item) => (
+                      <button
+                        type="button"
+                        key={item}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setOrigin(item);
+                          if (!primaryField) setPrimaryField('origin');
+                          setOriginOpen(false);
+                        }}
+                        className="block w-full text-left px-3 py-2 text-sm text-slate-100 hover:bg-slate-800/60"
+                      >
+                        {item}
+                      </button>
+                    ))
+                  )}
                 </div>
               ) : null}
             </div>
@@ -319,38 +325,35 @@ export default function Page() {
                 onChange={(e) => {
                   const value = e.target.value;
                   setDest(value);
-                  setDestFocused(true);
+                  setDestOpen(true);
                   if (!primaryField && value.trim()) setPrimaryField('dest');
                   if (!value.trim() && !origin.trim()) setPrimaryField(null);
                 }}
-                onFocus={() => setDestFocused(true)}
-                onClick={() => setDestFocused(true)}
-                onBlur={() => {
-                  setTimeout(() => {
-                    if (!destWrapRef.current?.contains(document.activeElement)) {
-                      setDestFocused(false);
-                    }
-                  }, 0);
-                }}
+                onFocus={() => setDestOpen(true)}
+                onClick={() => setDestOpen(true)}
                 className="w-full rounded-lg border border-slate-700/70 bg-slate-950/60 px-4 py-3 text-base text-slate-100 placeholder:text-slate-500 focus:ring-2 focus:ring-cyan-400 focus:border-transparent outline-none transition-all"
               />
               {showDestSuggestions ? (
-                <div className="absolute left-0 right-0 top-full mt-2 rounded-lg border border-cyan-400/40 bg-slate-900/95 shadow-lg shadow-cyan-500/20 max-h-56 overflow-auto z-40">
-                  {destSuggestions.map((item) => (
-                    <button
-                      type="button"
-                      key={item}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        setDest(item);
-                        if (!primaryField) setPrimaryField('dest');
-                        setDestFocused(false);
-                      }}
-                      className="block w-full text-left px-3 py-2 text-sm text-slate-100 hover:bg-slate-800/60"
-                    >
-                      {item}
-                    </button>
-                  ))}
+                <div className="absolute left-0 right-0 top-full mt-2 rounded-md border border-cyan-400/40 bg-slate-900/95 shadow-lg shadow-cyan-500/20 max-h-56 overflow-auto z-40">
+                  {destSuggestions.length === 0 ? (
+                    <div className="px-3 py-2 text-xs text-slate-400">候補なし</div>
+                  ) : (
+                    destSuggestions.map((item) => (
+                      <button
+                        type="button"
+                        key={item}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setDest(item);
+                          if (!primaryField) setPrimaryField('dest');
+                          setDestOpen(false);
+                        }}
+                        className="block w-full text-left px-3 py-2 text-sm text-slate-100 hover:bg-slate-800/60"
+                      >
+                        {item}
+                      </button>
+                    ))
+                  )}
                 </div>
               ) : null}
             </div>

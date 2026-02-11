@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Kanit, Zen_Kaku_Gothic_New } from 'next/font/google'
+import { Orbitron, Zen_Kaku_Gothic_New } from 'next/font/google'
 import './globals.css'
 
 const bodyFont = Zen_Kaku_Gothic_New({
@@ -8,14 +8,14 @@ const bodyFont = Zen_Kaku_Gothic_New({
   variable: '--font-body',
 })
 
-const displayFont = Kanit({
+const displayFont = Orbitron({
   subsets: ['latin'],
   weight: ['600', '700'],
   variable: '--font-display',
 })
 
 export const metadata: Metadata = {
-  title: '豊洲駅発 - 都バス混雑比較',
+  title: '即乗都バス',
   description: '豊洲駅から枝川・塩浜方面へ向かうバスの到着情報と混雑状況をリアルタイムで表示します。',
 }
 
