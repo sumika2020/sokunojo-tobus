@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { BUS_ROUTE_COLORS } from '../src/constants/busColors';
 
 type BusArrival = {
@@ -34,13 +34,13 @@ function occupancyBadge(level: BusArrival['occupancyLevel'], occupancy?: string 
   const base = 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium';
   switch (level) {
     case 'high':
-      return <span className={`${base} bg-red-100 text-red-800`}>混雑</span>;
+      return <span className={`${base} bg-rose-500/20 text-rose-200 ring-1 ring-rose-400/60`}>混雑</span>;
     case 'medium':
-      return <span className={`${base} bg-yellow-100 text-yellow-800`}>普通</span>;
+      return <span className={`${base} bg-amber-400/20 text-amber-200 ring-1 ring-amber-300/60`}>普通</span>;
     case 'low':
-      return <span className={`${base} bg-green-100 text-green-800`}>空き</span>;
+      return <span className={`${base} bg-emerald-400/20 text-emerald-200 ring-1 ring-emerald-300/60`}>空き</span>;
     default:
-      return <span className={`${base} bg-gray-100 text-gray-800`}>不明</span>;
+      return <span className={`${base} bg-slate-400/20 text-slate-200 ring-1 ring-slate-300/40`}>不明</span>;
   }
 }
 
@@ -83,6 +83,28 @@ export default function Page() {
   const [results, setResults] = useState<BusArrival[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const originWrapRef = useRef<HTMLLabelElement | null>(null);
+  const destWrapRef = useRef<HTMLLabelElement | null>(null);
+  const showOriginSuggestions = originSuggestions.length > 0 && originFocused;
+  const showDestSuggestions = destSuggestions.length > 0 && destFocused;
+
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      const inOrigin = originWrapRef.current?.contains(target);
+      const inDest = destWrapRef.current?.contains(target);
+      if (!inOrigin) setOriginFocused(false);
+      if (!inDest) setDestFocused(false);
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('touchstart', handlePointerDown, { passive: true });
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('touchstart', handlePointerDown);
+    };
+  }, []);
 
   const getDayOffset = (epochMs: number) => {
     const today = new Date();
@@ -101,7 +123,7 @@ export default function Page() {
     const anchor = primaryField === 'dest' && dest.trim() ? dest : '';
     const timer = setTimeout(async () => {
       try {
-        const url = `${apiBase}/api/bus/stops?query=${encodeURIComponent(origin)}${anchor ? `&anchor=${encodeURIComponent(anchor)}` : ''}`;
+        const url = `/api/bus/stops?query=${encodeURIComponent(origin)}${anchor ? `&anchor=${encodeURIComponent(anchor)}` : ''}`;
         const res = await fetch(url, { signal: controller.signal });
         if (!res.ok) return;
         const data = await res.json();
@@ -125,7 +147,7 @@ export default function Page() {
     const anchor = primaryField === 'origin' && origin.trim() ? origin : '';
     const timer = setTimeout(async () => {
       try {
-        const url = `${apiBase}/api/bus/stops?query=${encodeURIComponent(dest)}${anchor ? `&anchor=${encodeURIComponent(anchor)}` : ''}`;
+        const url = `/api/bus/stops?query=${encodeURIComponent(dest)}${anchor ? `&anchor=${encodeURIComponent(anchor)}` : ''}`;
         const res = await fetch(url, { signal: controller.signal });
         if (!res.ok) return;
         const data = await res.json();
@@ -172,83 +194,91 @@ export default function Page() {
     <main className="min-h-screen px-4 pb-12 pt-6">
       <div className="max-w-3xl mx-auto">
         <header className="mb-4">
-          <span className="inline-flex items-center gap-2 rounded-full border border-gray-200/70 bg-white/70 px-3 py-1 text-[11px] font-semibold text-gray-600">
+          <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/40 bg-slate-950/60 px-3 py-1 text-[11px] font-semibold text-cyan-200">
             個人開発・非公式アプリ
           </span>
-          <h1 className="mt-2 text-3xl font-display font-semibold text-gray-900">即乗都バス</h1>
-          <p className="text-xs text-gray-500 mt-1">由来：「今すぐ」＋「乗れる」＋「都バス」</p>
-          <p className="text-sm text-gray-600">
+          <h1 className="mt-2 text-3xl font-display font-semibold text-slate-50">即乗都バス</h1>
+          <p className="text-xs text-slate-300 mt-1">由来：「今すぐ」＋「乗れる」＋「都バス」</p>
+          <p className="text-sm text-slate-200">
             「どの系統が一番早いか？」という迷いを排除し、乗車から降車まで最短時間でつなぐ、都バス利用者のための特化型検索アプリ。
           </p>
-          <div className="card-surface mt-2 rounded-md px-4 py-3 text-[11px] text-gray-700">
-            <p className="text-gray-800 font-semibold">
+          <div className="card-surface mt-2 rounded-md px-4 py-3 text-[11px] text-slate-200">
+            <p className="text-slate-100 font-semibold">
               混雑率は直近の車両データを便の時刻に近いものへ紐付けた目安です。
             </p>
-            <div className="mt-3 rounded-md border border-gray-200/70 bg-white/70">
-              <div className="grid grid-cols-1 sm:grid-cols-[120px_110px_1fr] gap-1 sm:gap-3 px-3 py-2 text-[10px] uppercase tracking-[0.2em] font-bold text-gray-500">
+            <div className="mt-3 rounded-md border border-cyan-400/20 bg-slate-950/60">
+              <div className="grid grid-cols-1 sm:grid-cols-[120px_110px_1fr] gap-1 sm:gap-3 px-3 py-2 text-[10px] uppercase tracking-[0.2em] font-bold text-cyan-200/80">
                 <span>区分</span>
                 <span>目安</span>
                 <span>体感</span>
               </div>
-              <div className="border-t border-gray-200/70">
+              <div className="border-t border-cyan-400/10">
                 <div className="grid grid-cols-1 sm:grid-cols-[120px_110px_1fr] gap-1 sm:gap-3 px-3 py-2">
-                  <span className="inline-flex w-fit items-center rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700 font-bold">
+                  <span className="inline-flex w-fit items-center rounded-full bg-emerald-400/20 px-2 py-0.5 text-emerald-200 font-bold">
                     空き
                   </span>
-                  <span className="font-semibold text-gray-700">0-39%</span>
-                  <span className="text-gray-700">座席に空きが目立つ。立ち客は少なめで移動しやすい</span>
+                  <span className="font-semibold text-slate-100">0-39%</span>
+                  <span className="text-slate-200">座席に空きが目立つ。立ち客は少なめで移動しやすい</span>
                 </div>
               </div>
-              <div className="border-t border-gray-200/70">
+              <div className="border-t border-cyan-400/10">
                 <div className="grid grid-cols-1 sm:grid-cols-[120px_110px_1fr] gap-1 sm:gap-3 px-3 py-2">
-                  <span className="inline-flex w-fit items-center rounded-full bg-amber-50 px-2 py-0.5 text-amber-700 font-bold">
+                  <span className="inline-flex w-fit items-center rounded-full bg-amber-400/20 px-2 py-0.5 text-amber-200 font-bold">
                     普通
                   </span>
-                  <span className="font-semibold text-gray-700">40-69%</span>
-                  <span className="text-gray-700">座席は埋まりがち。立ち客が増え、場所によっては身動きが制限される</span>
+                  <span className="font-semibold text-slate-100">40-69%</span>
+                  <span className="text-slate-200">座席は埋まりがち。立ち客が増え、場所によっては身動きが制限される</span>
                 </div>
               </div>
-              <div className="border-t border-gray-200/70">
+              <div className="border-t border-cyan-400/10">
                 <div className="grid grid-cols-1 sm:grid-cols-[120px_110px_1fr] gap-1 sm:gap-3 px-3 py-2">
-                  <span className="inline-flex w-fit items-center rounded-full bg-rose-50 px-2 py-0.5 text-rose-700 font-bold">
+                  <span className="inline-flex w-fit items-center rounded-full bg-rose-500/20 px-2 py-0.5 text-rose-200 font-bold">
                     混雑
                   </span>
-                  <span className="font-semibold text-gray-700">70%以上</span>
-                  <span className="text-gray-700">座席はほぼ埋まり、立ち客が密集。通路の移動が難しい</span>
+                  <span className="font-semibold text-slate-100">70%以上</span>
+                  <span className="text-slate-200">座席はほぼ埋まり、立ち客が密集。通路の移動が難しい</span>
                 </div>
               </div>
-              <div className="border-t border-gray-200/70">
+              <div className="border-t border-cyan-400/10">
                 <div className="grid grid-cols-1 sm:grid-cols-[120px_110px_1fr] gap-1 sm:gap-3 px-3 py-2">
-                  <span className="inline-flex w-fit items-center rounded-full bg-gray-100 px-2 py-0.5 text-gray-600 font-bold">
+                  <span className="inline-flex w-fit items-center rounded-full bg-slate-700/40 px-2 py-0.5 text-slate-200 font-bold">
                     不明
                   </span>
-                  <span className="font-semibold text-gray-700">データなし</span>
-                  <span className="text-gray-700">データ提供元からのデータがないため数値化できない</span>
+                  <span className="font-semibold text-slate-100">データなし</span>
+                  <span className="text-slate-200">データ提供元からのデータがないため数値化できない</span>
                 </div>
               </div>
             </div>
-            <p className="mt-2 text-[10px] text-gray-500">（アプリ内の目安）</p>
+            <p className="mt-2 text-[10px] text-slate-400">（アプリ内の目安）</p>
           </div>
         </header>
 
         <form onSubmit={onSearch} className="card-surface rounded-2xl p-4 mb-4 space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <label className="text-sm text-gray-700">
+            <label className="text-sm text-slate-200 relative block" ref={originWrapRef}>
               乗車バス停
               <input
                 value={origin}
                 onChange={(e) => {
                   const value = e.target.value;
                   setOrigin(value);
+                  setOriginFocused(true);
                   if (!primaryField && value.trim()) setPrimaryField('origin');
                   if (!value.trim() && !dest.trim()) setPrimaryField(null);
                 }}
                 onFocus={() => setOriginFocused(true)}
-                onBlur={() => setTimeout(() => setOriginFocused(false), 0)}
-                className="mt-1 w-full rounded-md border border-gray-200/70 bg-white/70 px-3 py-2 text-sm"
+                onClick={() => setOriginFocused(true)}
+                onBlur={() => {
+                  setTimeout(() => {
+                    if (!originWrapRef.current?.contains(document.activeElement)) {
+                      setOriginFocused(false);
+                    }
+                  }, 0);
+                }}
+                className="mt-1 w-full rounded-md border border-slate-700/70 bg-slate-950/60 px-3 py-2 text-sm text-slate-100"
               />
-              {originFocused && originSuggestions.length > 0 ? (
-                <div className="mt-2 rounded-md border border-gray-200/70 bg-white/90 shadow-sm max-h-56 overflow-auto">
+              {showOriginSuggestions ? (
+                <div className="absolute left-0 right-0 top-full mt-2 rounded-md border border-cyan-400/40 bg-slate-900/95 shadow-lg shadow-cyan-500/20 max-h-56 overflow-auto z-40">
                   {originSuggestions.map((item) => (
                     <button
                       type="button"
@@ -259,7 +289,7 @@ export default function Page() {
                         if (!primaryField) setPrimaryField('origin');
                         setOriginFocused(false);
                       }}
-                      className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                      className="block w-full text-left px-3 py-2 text-sm text-slate-100 hover:bg-slate-800/60"
                     >
                       {item}
                     </button>
@@ -267,22 +297,30 @@ export default function Page() {
                 </div>
               ) : null}
             </label>
-            <label className="text-sm text-gray-700">
+            <label className="text-sm text-slate-200 relative block" ref={destWrapRef}>
               降車バス停
               <input
                 value={dest}
                 onChange={(e) => {
                   const value = e.target.value;
                   setDest(value);
+                  setDestFocused(true);
                   if (!primaryField && value.trim()) setPrimaryField('dest');
                   if (!value.trim() && !origin.trim()) setPrimaryField(null);
                 }}
                 onFocus={() => setDestFocused(true)}
-                onBlur={() => setTimeout(() => setDestFocused(false), 0)}
-                className="mt-1 w-full rounded-md border border-gray-200/70 bg-white/70 px-3 py-2 text-sm"
+                onClick={() => setDestFocused(true)}
+                onBlur={() => {
+                  setTimeout(() => {
+                    if (!destWrapRef.current?.contains(document.activeElement)) {
+                      setDestFocused(false);
+                    }
+                  }, 0);
+                }}
+                className="mt-1 w-full rounded-md border border-slate-700/70 bg-slate-950/60 px-3 py-2 text-sm text-slate-100"
               />
-              {destFocused && destSuggestions.length > 0 ? (
-                <div className="mt-2 rounded-md border border-gray-200/70 bg-white/90 shadow-sm max-h-56 overflow-auto">
+              {showDestSuggestions ? (
+                <div className="absolute left-0 right-0 top-full mt-2 rounded-md border border-cyan-400/40 bg-slate-900/95 shadow-lg shadow-cyan-500/20 max-h-56 overflow-auto z-40">
                   {destSuggestions.map((item) => (
                     <button
                       type="button"
@@ -293,7 +331,7 @@ export default function Page() {
                         if (!primaryField) setPrimaryField('dest');
                         setDestFocused(false);
                       }}
-                      className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                      className="block w-full text-left px-3 py-2 text-sm text-slate-100 hover:bg-slate-800/60"
                     >
                       {item}
                     </button>
@@ -314,7 +352,7 @@ export default function Page() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-slate-900 text-white py-2 text-sm font-medium disabled:opacity-50"
+            className="w-full rounded-md bg-cyan-400 text-slate-900 py-2 text-sm font-semibold hover:bg-cyan-300 disabled:opacity-50"
           >
             {loading ? '検索中...' : '検索'}
           </button>
@@ -322,10 +360,10 @@ export default function Page() {
 
         <section className="space-y-2">
           {error ? (
-            <div className="rounded-lg bg-red-50/80 p-4 border border-red-100 text-sm text-red-600">{error}</div>
+            <div className="rounded-lg bg-rose-500/20 p-4 border border-rose-400/40 text-sm text-rose-200">{error}</div>
           ) : results.length === 0 ? (
             <div className="card-surface rounded-lg p-4">
-              <p className="text-center text-gray-600">検索結果がありません。</p>
+              <p className="text-center text-slate-300">検索結果がありません。</p>
             </div>
           ) : (
             <ul className="space-y-2">
@@ -348,7 +386,7 @@ export default function Page() {
                         : undefined
                     }
                     className={`card-surface group p-4 rounded-lg border-l-4 transition-all hover:shadow-lg hover:-translate-y-0.5 hover:scale-[1.01] ${
-                      item.isLast ? 'border-red-600' : 'border-transparent'
+                      item.isLast ? 'border-rose-400' : 'border-cyan-400/30'
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -366,25 +404,25 @@ export default function Page() {
                           >
                             {displayId}
                           </span>
-                          <span className="ml-2 text-sm text-gray-600">{rawName.replace(displayId, '').trim()}</span>
+                          <span className="ml-2 text-sm text-slate-200">{rawName.replace(displayId, '').trim()}</span>
                         </div>
                         {item.originPoleName && item.originPoleName !== item.originStopName ? (
-                          <div className="text-sm text-gray-500">乗り場: {item.originPoleName}</div>
+                          <div className="text-sm text-slate-300">乗り場: {item.originPoleName}</div>
                         ) : null}
                         {item.destStopName ? (
-                          <div className="text-sm text-gray-500">行先: {item.destStopName}</div>
+                          <div className="text-sm text-slate-300">行先: {item.destStopName}</div>
                         ) : null}
                       </div>
                       <div className="text-right">
-                        <div className="text-2xl font-bold transition-all group-hover:text-3xl">
+                        <div className="text-2xl font-bold text-slate-50 transition-all group-hover:text-3xl">
                           {dayOffset >= 1 ? (
-                            <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded mr-1">
+                            <span className="text-[10px] font-bold text-rose-200 bg-rose-500/20 px-1.5 py-0.5 rounded mr-1">
                               {dayOffset === 1 ? '翌日' : `${dayOffset}日後`}
                             </span>
                           ) : null}
                           {item.departureTime}
                         </div>
-                        <div className="text-[11px] font-semibold text-gray-400">
+                        <div className="text-[11px] font-semibold text-slate-300">
                           定刻 {item.scheduledTime} / 遅れ {item.delayMinutes}分
                         </div>
                         <div className="mt-1 transition-all group-hover:scale-105">

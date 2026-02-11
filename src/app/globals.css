@@ -7,11 +7,12 @@ html {
 }
 
 :root {
-  --app-bg: #efe6d7;
-  --app-ink: #1f2933;
-  --card-bg: rgba(255, 255, 255, 0.7);
-  --card-border: rgba(148, 163, 184, 0.35);
-  --accent: #f97316;
+  --app-bg: #070b14;
+  --app-ink: #e8f0ff;
+  --card-bg: rgba(9, 16, 28, 0.68);
+  --card-border: rgba(56, 189, 248, 0.24);
+  --accent: #22d3ee;
+  --accent-warm: #f59e0b;
   --font-body: "Avenir Next", "Avenir", "Trebuchet MS", "Segoe UI", "Yu Gothic", "Meiryo", sans-serif;
   --font-display: "Rockwell", "Iowan Old Style", "Georgia", "Times New Roman", serif;
 }
@@ -21,10 +22,14 @@ html {
   color: var(--app-ink);
   background-color: var(--app-bg);
   background-image:
-    radial-gradient(circle at 10% 20%, rgba(249, 115, 22, 0.22), transparent 45%),
-    radial-gradient(circle at 85% 15%, rgba(14, 165, 233, 0.2), transparent 42%),
-    linear-gradient(135deg, rgba(246, 231, 214, 0.95), rgba(230, 243, 250, 0.95));
+    radial-gradient(circle at 12% 18%, rgba(34, 211, 238, 0.24), transparent 48%),
+    radial-gradient(circle at 80% 22%, rgba(245, 158, 11, 0.18), transparent 50%),
+    radial-gradient(circle at 20% 78%, rgba(59, 130, 246, 0.16), transparent 55%),
+    linear-gradient(135deg, rgba(7, 11, 20, 0.98), rgba(10, 16, 28, 0.96) 45%, rgba(5, 8, 18, 0.98)),
+    repeating-linear-gradient(0deg, rgba(148, 163, 184, 0.08) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(90deg, rgba(56, 189, 248, 0.08) 0 1px, transparent 1px 26px);
   font-family: var(--font-body, ui-sans-serif, system-ui, -apple-system, sans-serif);
+  background-attachment: fixed;
 }
 
 .font-display {
@@ -35,8 +40,8 @@ html {
 .card-surface {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
-  backdrop-filter: blur(6px);
+  box-shadow: 0 20px 40px rgba(3, 7, 18, 0.6);
+  backdrop-filter: blur(14px) saturate(150%);
 }
 
 .route-badge {
