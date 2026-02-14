@@ -85,6 +85,8 @@ export default function Page() {
   const [error, setError] = useState('');
   const originWrapRef = useRef<HTMLDivElement | null>(null);
   const destWrapRef = useRef<HTMLDivElement | null>(null);
+  const originQuerySeq = useRef(0);
+  const destQuerySeq = useRef(0);
   const showOriginSuggestions = originOpen && origin.trim().length > 0;
   const showDestSuggestions = destOpen && dest.trim().length > 0;
 
@@ -122,15 +124,20 @@ export default function Page() {
     }
     const controller = new AbortController();
     const anchor = primaryField === 'dest' && dest.trim() ? dest : '';
+    const seq = ++originQuerySeq.current;
     const timer = setTimeout(async () => {
       try {
         const url = `/api/bus/stops?query=${encodeURIComponent(origin)}${anchor ? `&anchor=${encodeURIComponent(anchor)}` : ''}`;
         const res = await fetch(url, { signal: controller.signal });
         if (!res.ok) return;
         const data = await res.json();
-        setOriginSuggestions(Array.isArray(data.items) ? data.items : []);
+        if (seq === originQuerySeq.current) {
+          setOriginSuggestions(Array.isArray(data.items) ? data.items : []);
+        }
       } catch {
-        setOriginSuggestions([]);
+        if (seq === originQuerySeq.current) {
+          setOriginSuggestions([]);
+        }
       }
     }, 200);
     return () => {
@@ -147,15 +154,20 @@ export default function Page() {
     }
     const controller = new AbortController();
     const anchor = primaryField === 'origin' && origin.trim() ? origin : '';
+    const seq = ++destQuerySeq.current;
     const timer = setTimeout(async () => {
       try {
         const url = `/api/bus/stops?query=${encodeURIComponent(dest)}${anchor ? `&anchor=${encodeURIComponent(anchor)}` : ''}`;
         const res = await fetch(url, { signal: controller.signal });
         if (!res.ok) return;
         const data = await res.json();
-        setDestSuggestions(Array.isArray(data.items) ? data.items : []);
+        if (seq === destQuerySeq.current) {
+          setDestSuggestions(Array.isArray(data.items) ? data.items : []);
+        }
       } catch {
-        setDestSuggestions([]);
+        if (seq === destQuerySeq.current) {
+          setDestSuggestions([]);
+        }
       }
     }, 200);
     return () => {
@@ -269,7 +281,7 @@ export default function Page() {
           </div>
         </header>
 
-        <form onSubmit={onSearch} className="card-surface rounded-2xl p-5 mb-6">
+        <form onSubmit={onSearch} className="card-surface relative z-20 rounded-2xl p-5 mb-6">
           <div className="relative flex flex-col sm:flex-row gap-3 mb-4">
             <div className="flex-1 relative" ref={originWrapRef}>
               <label className="block text-xs font-bold text-slate-300 mb-1 uppercase tracking-wider">Departure</label>
@@ -287,7 +299,7 @@ export default function Page() {
                 className="w-full rounded-lg border border-slate-700/70 bg-slate-950/60 px-4 py-3 text-base text-slate-100 placeholder:text-slate-500 focus:ring-2 focus:ring-cyan-400 focus:border-transparent outline-none transition-all"
               />
               {showOriginSuggestions ? (
-                <div className="absolute left-0 right-0 top-full mt-2 rounded-md border border-cyan-400/40 bg-slate-900/95 shadow-lg shadow-cyan-500/20 max-h-56 overflow-auto z-40">
+                <div className="absolute left-0 right-0 top-full mt-2 rounded-md border border-cyan-400/40 bg-slate-900/95 shadow-lg shadow-cyan-500/20 max-h-56 overflow-auto z-50">
                   {originSuggestions.length === 0 ? (
                     <div className="px-3 py-2 text-xs text-slate-400">候補なし</div>
                   ) : (
@@ -336,7 +348,7 @@ export default function Page() {
                 className="w-full rounded-lg border border-slate-700/70 bg-slate-950/60 px-4 py-3 text-base text-slate-100 placeholder:text-slate-500 focus:ring-2 focus:ring-cyan-400 focus:border-transparent outline-none transition-all"
               />
               {showDestSuggestions ? (
-                <div className="absolute left-0 right-0 top-full mt-2 rounded-md border border-cyan-400/40 bg-slate-900/95 shadow-lg shadow-cyan-500/20 max-h-56 overflow-auto z-40">
+                <div className="absolute left-0 right-0 top-full mt-2 rounded-md border border-cyan-400/40 bg-slate-900/95 shadow-lg shadow-cyan-500/20 max-h-56 overflow-auto z-50">
                   {destSuggestions.length === 0 ? (
                     <div className="px-3 py-2 text-xs text-slate-400">候補なし</div>
                   ) : (

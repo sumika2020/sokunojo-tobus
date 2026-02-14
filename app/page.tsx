@@ -81,10 +81,13 @@ export default function Page() {
   const [originOpen, setOriginOpen] = useState(false);
   const [destOpen, setDestOpen] = useState(false);
   const [results, setResults] = useState<BusArrival[]>([]);
+  const [rawApiResponse, setRawApiResponse] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const originWrapRef = useRef<HTMLLabelElement | null>(null);
   const destWrapRef = useRef<HTMLLabelElement | null>(null);
+  const originQuerySeq = useRef(0);
+  const destQuerySeq = useRef(0);
   const showOriginSuggestions = originOpen && origin.trim().length > 0;
   const showDestSuggestions = destOpen && dest.trim().length > 0;
 
@@ -122,15 +125,20 @@ export default function Page() {
     }
     const controller = new AbortController();
     const anchor = primaryField === 'dest' && dest.trim() ? dest : '';
+    const seq = ++originQuerySeq.current;
     const timer = setTimeout(async () => {
       try {
         const url = `/api/bus/stops?query=${encodeURIComponent(origin)}${anchor ? `&anchor=${encodeURIComponent(anchor)}` : ''}`;
         const res = await fetch(url, { signal: controller.signal });
         if (!res.ok) return;
         const data = await res.json();
-        setOriginSuggestions(Array.isArray(data.items) ? data.items : []);
+        if (seq === originQuerySeq.current) {
+          setOriginSuggestions(Array.isArray(data.items) ? data.items : []);
+        }
       } catch {
-        setOriginSuggestions([]);
+        if (seq === originQuerySeq.current) {
+          setOriginSuggestions([]);
+        }
       }
     }, 200);
     return () => {
@@ -147,19 +155,25 @@ export default function Page() {
     }
     const controller = new AbortController();
     const anchor = primaryField === 'origin' && origin.trim() ? origin : '';
+    const seq = ++destQuerySeq.current;
     const timer = setTimeout(async () => {
       try {
         const url = `/api/bus/stops?query=${encodeURIComponent(dest)}${anchor ? `&anchor=${encodeURIComponent(anchor)}` : ''}`;
         const res = await fetch(url, { signal: controller.signal });
         if (!res.ok) return;
         const data = await res.json();
-        setDestSuggestions(Array.isArray(data.items) ? data.items : []);
+        if (seq === destQuerySeq.current) {
+          setDestSuggestions(Array.isArray(data.items) ? data.items : []);
+        }
       } catch {
-        setDestSuggestions([]);
+        if (seq === destQuerySeq.current) {
+          setDestSuggestions([]);
+        }
       }
     }, 200);
     return () => {
       clearTimeout(timer);
+
       controller.abort();
     };
   }, [dest, origin, primaryField]);
@@ -178,9 +192,11 @@ export default function Page() {
       }
       const data = (await res.json()) as ApiResponse;
       setResults(Array.isArray(data.results) ? data.results : []);
+      setRawApiResponse(data);
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
       setResults([]);
+      setRawApiResponse(null);
       if (err instanceof Error) {
         setError(err.message);
       } else if (err instanceof Event) {
@@ -269,7 +285,7 @@ export default function Page() {
           </details>
         </header>
 
-        <form onSubmit={onSearch} className="card-surface rounded-3xl p-5 mb-5 space-y-4">
+        <form onSubmit={onSearch} className="card-surface relative z-20 rounded-3xl p-5 mb-5 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label className="text-sm text-slate-200 relative block" ref={originWrapRef}>
               乗車バス停
@@ -287,7 +303,7 @@ export default function Page() {
                 className="mt-2 w-full rounded-xl border border-cyan-400/20 bg-white/5 px-3 py-2 text-sm text-slate-100 shadow-inner shadow-cyan-500/10 focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300/30"
               />
               {showOriginSuggestions ? (
-                <div className="absolute left-0 right-0 top-full mt-2 rounded-xl border border-cyan-400/40 bg-slate-950/95 shadow-lg shadow-cyan-500/20 max-h-56 overflow-auto z-40">
+                <div className="absolute left-0 right-0 top-full mt-2 rounded-xl border border-cyan-400/40 bg-slate-950/95 shadow-lg shadow-cyan-500/20 max-h-56 overflow-auto z-50">
                   {originSuggestions.length === 0 ? (
                     <div className="px-3 py-2 text-xs text-slate-400">候補なし</div>
                   ) : (
@@ -326,7 +342,7 @@ export default function Page() {
                 className="mt-2 w-full rounded-xl border border-cyan-400/20 bg-white/5 px-3 py-2 text-sm text-slate-100 shadow-inner shadow-cyan-500/10 focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300/30"
               />
               {showDestSuggestions ? (
-                <div className="absolute left-0 right-0 top-full mt-2 rounded-xl border border-cyan-400/40 bg-slate-950/95 shadow-lg shadow-cyan-500/20 max-h-56 overflow-auto z-40">
+                <div className="absolute left-0 right-0 top-full mt-2 rounded-xl border border-cyan-400/40 bg-slate-950/95 shadow-lg shadow-cyan-500/20 max-h-56 overflow-auto z-50">
                   {destSuggestions.length === 0 ? (
                     <div className="px-3 py-2 text-xs text-slate-400">候補なし</div>
                   ) : (
@@ -369,82 +385,93 @@ export default function Page() {
         </form>
 
         <section className="space-y-2">
+
           {error ? (
             <div className="rounded-lg bg-rose-500/20 p-4 border border-rose-400/40 text-sm text-rose-200">{error}</div>
           ) : results.length === 0 ? (
             <div className="card-surface rounded-lg p-4">
               <p className="text-center text-slate-300">検索結果がありません。</p>
+              <p className="text-center text-cyan-300 font-bold leading-tight bg-[#222] py-1 rounded-md mt-4 mb-2 text-[0.8rem] tracking-wide">
+                ※ 3時間以内に発車する便のうち、各系統ごとに最大2本まで表示しています。
+              </p>
             </div>
           ) : (
-            <ul className="space-y-2">
-              {results.map((item) => {
-                const rawName = item.routeName || '';
-                const displayId = normalizeRouteKey(rawName);
-                const isSpecial = rawName.includes('出入') || rawName.includes('折返');
-                const colors = getNormalizedColor(rawName);
-                const dayOffset = getDayOffset(item.departureEpoch);
+            <>
+              <ul className="space-y-2">
+                {results.map((item) => {
+                  const rawName = item.routeName || '';
+                  const displayId = normalizeRouteKey(rawName);
+                  const isSpecial = rawName.includes('出入') || rawName.includes('折返');
+                  const colors = getNormalizedColor(rawName);
+                  const dayOffset = getDayOffset(item.departureEpoch);
 
-                return (
-                  <li
-                    key={item.id}
-                    style={
-                      item.isLast
-                        ? {
-                            backgroundImage:
-                              'repeating-linear-gradient(135deg, rgba(239,68,68,0.18), rgba(239,68,68,0.18) 10px, rgba(255,255,255,0.6) 10px, rgba(255,255,255,0.6) 20px)',
-                          }
-                        : undefined
-                    }
-                    className={`card-surface group p-4 rounded-2xl border-l-4 transition-all hover:shadow-lg hover:-translate-y-0.5 hover:scale-[1.01] ${
-                      item.isLast ? 'border-rose-400' : 'border-cyan-400/30'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-lg font-semibold">
-                          <span
-                            style={{
-                              backgroundColor: colors.bg,
-                              color: colors.text,
-                              backgroundImage: isSpecial
-                                ? 'repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,0.15) 8px, rgba(255,255,255,0.15) 16px)'
-                                : 'none',
-                            }}
-                            className="inline-flex items-center justify-center min-w-[80px] px-3 py-1 rounded text-sm font-semibold"
-                          >
-                            {displayId}
-                          </span>
-                          <span className="ml-2 text-sm text-slate-200">{rawName.replace(displayId, '').trim()}</span>
-                        </div>
-                        {item.originPoleName && item.originPoleName !== item.originStopName ? (
-                          <div className="text-sm text-slate-300">乗り場: {item.originPoleName}</div>
-                        ) : null}
-                        {item.destStopName ? (
-                          <div className="text-sm text-slate-300">行先: {item.destStopName}</div>
-                        ) : null}
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-slate-50 transition-all group-hover:text-3xl">
-                          {dayOffset >= 1 ? (
-                            <span className="text-[10px] font-bold text-rose-200 bg-rose-500/20 px-1.5 py-0.5 rounded mr-1">
-                              {dayOffset === 1 ? '翌日' : `${dayOffset}日後`}
+                  return (
+                    <li
+                      key={item.id}
+                      style={
+                        item.isLast
+                          ? {
+                              backgroundImage:
+                                'repeating-linear-gradient(135deg, rgba(239,68,68,0.18), rgba(239,68,68,0.18) 10px, rgba(255,255,255,0.6) 10px, rgba(255,255,255,0.6) 20px)',
+                            }
+                          : undefined
+                      }
+                      className={`card-surface group p-4 rounded-2xl border-l-4 transition-all hover:shadow-lg hover:-translate-y-0.5 hover:scale-[1.01] ${
+                        item.isLast ? 'border-rose-400' : 'border-cyan-400/30'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-lg font-semibold">
+                            <span
+                              style={{
+                                backgroundColor: colors.bg,
+                                color: colors.text,
+                                backgroundImage: isSpecial
+                                  ? 'repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,0.15) 8px, rgba(255,255,255,0.15) 16px)'
+                                  : 'none',
+                              }}
+                              className="inline-flex items-center justify-center min-w-[80px] px-3 py-1 rounded text-sm font-semibold"
+                            >
+                              {displayId}
                             </span>
+                            <span className="ml-2 text-sm text-slate-200">{rawName.replace(displayId, '').trim()}</span>
+                          </div>
+                          {item.originPoleName && item.originPoleName !== item.originStopName ? (
+                            <div className="text-sm text-slate-300">乗り場: {item.originPoleName}</div>
                           ) : null}
-                          {item.departureTime}
+                          {item.destStopName ? (
+                            <div className="text-sm text-slate-300">行先: {item.destStopName}</div>
+                          ) : null}
                         </div>
-                        <div className="text-[11px] font-semibold text-slate-300">
-                          定刻 {item.scheduledTime} / 遅れ {item.delayMinutes}分
-                        </div>
-                        <div className="mt-1 transition-all group-hover:scale-105">
-                          {occupancyBadge(item.occupancyLevel, item.occupancy)}
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-slate-50 transition-all group-hover:text-3xl">
+                            {dayOffset >= 1 ? (
+                              <span className="text-[10px] font-bold text-rose-200 bg-rose-500/20 px-1.5 py-0.5 rounded mr-1">
+                                {dayOffset === 1 ? '翌日' : `${dayOffset}日後`}
+                              </span>
+                            ) : null}
+                            {item.departureTime}
+                          </div>
+                          <div className="text-[11px] font-semibold text-slate-300">
+                            定刻 {item.scheduledTime} / 遅れ {item.delayMinutes}分
+                          </div>
+                          <div className="mt-1 transition-all group-hover:scale-105">
+                            {occupancyBadge(item.occupancyLevel, item.occupancy)}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="text-center text-cyan-300 font-bold leading-tight bg-[#222] py-1 rounded-md mt-4 mb-2 text-[0.8rem] tracking-wide">
+                ※ 3時間以内に発車する便のうち、各系統ごとに最大2本まで表示しています。
+              </p>
+              <p className="text-center text-xs text-slate-400 mt-2">※ 3時間以内に発車する便のみ表示しています。</p>
+            </>
           )}
+
         </section>
 
         <footer className="mt-6 text-xs text-gray-500 text-center">

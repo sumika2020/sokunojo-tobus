@@ -40,6 +40,7 @@ const PATTERN_CACHE_TTL_MS = 10 * 60 * 1000;
 const POLE_CACHE_TTL_MS = 10 * 60 * 1000;
 const STOP_LIST_CACHE_TTL_MS = 10 * 60 * 1000;
 const OCCUPANCY_MATCH_WINDOW_MS = 10 * 60 * 1000;
+const MAX_LOOKAHEAD_MS = 3 * 60 * 60 * 1000;
 
 type CacheEntry<T> = {
   expires: number;
@@ -762,7 +763,8 @@ export async function getNextBuses(originStopName: string, destStopName: string)
   }
 
   const now = Date.now();
-  const upcoming = departures.filter((d) => d.departureEpoch >= now);
+  const cutoff = now + MAX_LOOKAHEAD_MS;
+  const upcoming = departures.filter((d) => d.departureEpoch >= now && d.departureEpoch <= cutoff);
   const deduped = dedupeDepartures(upcoming);
   deduped.sort((a, b) => a.departureEpoch - b.departureEpoch);
   const todayKey = toJstDateKey(Date.now());
